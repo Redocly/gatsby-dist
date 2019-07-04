@@ -1,5 +1,5 @@
 {
-  "name": "@redocly/gatsby",
+  "name": "gatsby",
   "description": "Blazing fast modern site generator for React",
   "version": "2.13.3-fork.0",
   "author": "Kyle Mathews <mathews.kyle@gmail.com>",
@@ -179,7 +179,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/redocly/gatsby.git"
+    "url": "git+https://github.com/redocly/gatsby-dist.git"
   },
   "resolutions": {
     "graphql": "^14.1.1"
