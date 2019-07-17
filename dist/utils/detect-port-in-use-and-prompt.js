@@ -1,10 +1,6 @@
 "use strict";
 
-const {
-  promisify
-} = require(`util`);
-
-const detectPort = promisify(require(`detect-port`));
+const detectPort = require(`detect-port`);
 
 const report = require(`gatsby-cli/lib/reporter`);
 

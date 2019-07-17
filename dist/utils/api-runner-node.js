@@ -26,7 +26,9 @@ const {
   buildObjectType,
   buildUnionType,
   buildInterfaceType,
-  buildInputObjectType
+  buildInputObjectType,
+  buildEnumType,
+  buildScalarType
 } = require(`../schema/types/type-builders`);
 
 const {
@@ -207,7 +209,9 @@ const runAPI = (plugin, api, args) => {
         buildObjectType,
         buildUnionType,
         buildInterfaceType,
-        buildInputObjectType
+        buildInputObjectType,
+        buildEnumType,
+        buildScalarType
       }
     }, plugin.pluginOptions]; // If the plugin is using a callback use that otherwise
     // expect a Promise to be returned.
@@ -351,7 +355,7 @@ module.exports = async (api, args = {}, pluginSource) => new Promise(resolve => 
       return null;
     }
 
-    let pluginName = plugin.name === `default-site-plugin` ? `gatsby-node.js` : `Plugin ${plugin.name}`;
+    let pluginName = plugin.name === `default-site-plugin` ? `gatsby-node.js` : plugin.name;
     return new Promise(resolve => {
       resolve(runAPI(plugin, api, { ...args,
         parentSpan: apiSpan
@@ -360,7 +364,15 @@ module.exports = async (api, args = {}, pluginSource) => new Promise(resolve => 
       decorateEvent(`BUILD_PANIC`, {
         pluginName: `${plugin.name}@${plugin.version}`
       });
-      reporter.panicOnBuild(`${pluginName} returned an error`, err);
+      reporter.panicOnBuild({
+        id: `11321`,
+        context: {
+          pluginName,
+          api,
+          message: err instanceof Error ? err.message : err
+        },
+        error: err instanceof Error ? err : undefined
+      });
       return null;
     });
   }).then(results => {

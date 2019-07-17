@@ -105,10 +105,13 @@ class Runner {
   }
 
   async parseEverything() {
-    const filesRegex = _path.default.join(`/**`, `*.+(t|j)s?(x)`);
+    const filesRegex = `*.+(t|j)s?(x)`; // Pattern that will be appended to searched directories.
+    // It will match any .js, .jsx, .ts, and .tsx files, that are not
+    // inside <searched_directory>/node_modules.
 
+    const pathRegex = `/{${filesRegex},!(node_modules)/**/${filesRegex}}`;
     const modulesThatUseGatsby = await (0, _gatsbyDependents.default)();
-    let files = [_path.default.join(this.base, `src`), _path.default.join(this.base, `.cache`, `fragments`)].concat(this.additional.map(additional => _path.default.join(additional, `src`))).concat(modulesThatUseGatsby.map(module => module.path)).reduce((merged, folderPath) => merged.concat(_glob.default.sync(_path.default.join(folderPath, filesRegex), {
+    let files = [_path.default.join(this.base, `src`), _path.default.join(this.base, `.cache`, `fragments`)].concat(this.additional.map(additional => _path.default.join(additional, `src`))).concat(modulesThatUseGatsby.map(module => module.path)).reduce((merged, folderPath) => merged.concat(_glob.default.sync(_path.default.join(folderPath, pathRegex), {
       nodir: true
     })), []);
     files = files.filter(d => !d.match(/\.d\.ts$/));

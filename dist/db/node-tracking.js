@@ -1,6 +1,8 @@
 "use strict";
 
 const _ = require(`lodash`);
+
+const reporter = require(`gatsby-cli/lib/reporter`);
 /**
  * Map containing links between inline objects or arrays
  * and Node that contains them
@@ -119,28 +121,22 @@ exports.trackInlineObjectsInRootNode = trackInlineObjectsInRootNode;
 const findRootNodeAncestor = (obj, predicate = null) => {
   const {
     getNode
-  } = require(`./nodes`); // Find the root node.
+  } = require(`./nodes`);
 
+  let iterations = 0;
+  let node = obj;
 
-  let rootNode = obj;
-  let whileCount = 0;
-  let rootNodeId;
-
-  while ((!predicate || !predicate(rootNode)) && (rootNodeId = getRootNodeId(rootNode) || rootNode.parent) && (rootNode.parent && getNode(rootNode.parent) !== undefined || getNode(rootNodeId)) && whileCount < 101) {
-    if (rootNodeId) {
-      rootNode = getNode(rootNodeId);
-    } else {
-      rootNode = getNode(rootNode.parent);
-    }
-
-    whileCount += 1;
-
-    if (whileCount > 100) {
-      console.log(`It looks like you have a node that's set its parent as itself`, rootNode);
-    }
+  while (iterations++ < 100) {
+    if (predicate && predicate(node)) return node;
+    const parent = node.parent && getNode(node.parent);
+    const id = getRootNodeId(node);
+    const trackedParent = id && getNode(id);
+    if (!parent && !trackedParent) return node;
+    node = parent || trackedParent;
   }
 
-  return !predicate || predicate(rootNode) ? rootNode : null;
+  reporter.error(`It looks like you have a node that's set its parent as itself:\n\n` + node);
+  return null;
 };
 
 function trackDbNodes() {

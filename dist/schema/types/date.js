@@ -6,7 +6,8 @@ const {
   GraphQLString,
   GraphQLBoolean,
   GraphQLScalarType,
-  Kind
+  Kind,
+  defaultFieldResolver
 } = require(`graphql`);
 
 const {
@@ -135,13 +136,14 @@ const formatDate = ({
   return normalizedDate;
 };
 
-const getDateResolver = defaults => {
+const getDateResolver = (defaults, prevFieldConfig) => {
+  const resolver = prevFieldConfig.resolve || defaultFieldResolver;
   const {
     locale,
     formatString
   } = defaults;
   return {
-    args: {
+    args: { ...prevFieldConfig.args,
       formatString: {
         type: GraphQLString,
         description: oneLine`
@@ -172,10 +174,8 @@ const getDateResolver = defaults => {
       }
     },
 
-    resolve(source, args, context, {
-      fieldName
-    }) {
-      const date = source[fieldName];
+    async resolve(source, args, context, info) {
+      const date = await resolver(source, args, context, info);
       if (date == null) return null;
       return Array.isArray(date) ? date.map(d => formatDate({
         date: d,

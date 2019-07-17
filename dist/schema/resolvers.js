@@ -17,11 +17,7 @@ const {
   getValueAt
 } = require(`../utils/get-value-at`);
 
-const findMany = typeName => ({
-  args,
-  context,
-  info
-}) => context.nodeModel.runQuery({
+const findMany = typeName => (source, args, context, info) => context.nodeModel.runQuery({
   query: args,
   firstOnly: false,
   type: info.schema.getType(typeName)
@@ -30,11 +26,7 @@ const findMany = typeName => ({
   connectionType: typeName
 });
 
-const findOne = typeName => ({
-  args,
-  context,
-  info
-}) => context.nodeModel.runQuery({
+const findOne = typeName => (source, args, context, info) => context.nodeModel.runQuery({
   query: {
     filter: args
   },
@@ -44,24 +36,19 @@ const findOne = typeName => ({
   path: context.path
 });
 
-const findManyPaginated = typeName => async rp => {
+const findManyPaginated = typeName => async (source, args, context, info) => {
   // Peek into selection set and pass on the `field` arg of `group` and
-  // `distinct` which might need to be resolved. The easiest way to check if
-  // `group` or `distinct` are in the selection set is with the `projection`
-  // field which is added by `graphql-compose`'s `Resolver`. If we find it
-  // there, get the actual `field` arg.
-  const group = rp.projection.group && getProjectedField(rp.info, `group`);
-  const distinct = rp.projection.distinct && getProjectedField(rp.info, `distinct`);
-  const args = { ...rp.args,
+  // `distinct` which might need to be resolved.
+  const group = getProjectedField(info, `group`);
+  const distinct = getProjectedField(info, `distinct`);
+  const extendedArgs = { ...args,
     group: group || [],
     distinct: distinct || []
   };
-  const result = await findMany(typeName)({ ...rp,
-    args
-  });
+  const result = await findMany(typeName)(source, extendedArgs, context, info);
   return paginate(result, {
-    skip: rp.args.skip,
-    limit: rp.args.limit
+    skip: args.skip,
+    limit: args.limit
   });
 };
 
@@ -146,8 +133,10 @@ const paginate = (results = [], {
 const link = ({
   by = `id`,
   from
-}) => async (source, args, context, info) => {
-  const fieldValue = source && source[from || info.fieldName];
+}, originalResolver) => async (source, args, context, info) => {
+  const fieldValue = await originalResolver(source, args, context, { ...info,
+    fieldName: from || info.fieldName
+  });
   if (fieldValue == null || _.isPlainObject(fieldValue)) return fieldValue;
 
   if (Array.isArray(fieldValue) && (fieldValue[0] == null || _.isPlainObject(fieldValue[0]))) {
@@ -212,8 +201,10 @@ const link = ({
 
 const fileByPath = ({
   from
-}) => (source, args, context, info) => {
-  const fieldValue = source && source[from || info.fieldName];
+}, originalResolver) => async (source, args, context, info) => {
+  const fieldValue = await originalResolver(source, args, context, { ...info,
+    fieldName: from || info.fieldName
+  });
   if (fieldValue == null || _.isPlainObject(fieldValue)) return fieldValue;
 
   if (Array.isArray(fieldValue) && (fieldValue[0] == null || _.isPlainObject(fieldValue[0]))) {

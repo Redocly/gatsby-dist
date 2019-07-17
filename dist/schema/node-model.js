@@ -137,9 +137,9 @@ class LocalNodeModel {
     // only need to know about node types in the store.
 
     let nodes;
-    const nodeTypeNames = toNodeTypeNames(this.schema, gqlType);
 
-    if (nodeTypeNames.length > 1) {
+    if (isAbstractType(gqlType)) {
+      const nodeTypeNames = toNodeTypeNames(this.schema, gqlType);
       nodes = nodeTypeNames.reduce((acc, typeName) => acc.concat(this.nodeStore.getNodesByType(typeName)), []);
     }
 

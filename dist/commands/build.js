@@ -42,10 +42,7 @@ const pageDataUtil = require(`../utils/page-data`);
 
 const WorkerPool = require(`../utils/worker/pool`);
 
-function reportFailure(msg, err) {
-  report.log(``);
-  report.panic(msg, err);
-}
+const handleWebpackError = require(`../utils/webpack-error-parser`);
 
 const waitJobsFinished = () => new Promise((resolve, reject) => {
   const onEndJob = () => {
@@ -99,7 +96,7 @@ module.exports = async function build(program) {
   });
   activity.start();
   const stats = await buildProductionBundle(program).catch(err => {
-    reportFailure(`Generating JavaScript bundles failed`, err);
+    report.panic(handleWebpackError(`build-javascript`, err));
   });
   activity.end();
   const workerPool = WorkerPool.create();
