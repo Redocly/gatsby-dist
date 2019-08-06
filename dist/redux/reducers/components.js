@@ -59,7 +59,8 @@ module.exports = (state = new Map(), action) => {
             });
           } else if (action.contextModified) {
             service.send({
-              type: `PAGE_CONTEXT_MODIFIED`
+              type: `PAGE_CONTEXT_MODIFIED`,
+              path: action.payload.path
             });
           }
         }
